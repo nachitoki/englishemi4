@@ -16,11 +16,11 @@ import {
 
 /**
  * English Study App – 7th Grade (bilingüe EN–ES)
- * Cambios:
- *  - Vocabulario ahora es { en, es }
- *  - Flashcards muestran traducción (con audio opcional)
- *  - Quiz con dirección EN→ES o ES→EN
- *  - Estilos y estructura compatibles con móvil
+ * Incluye:
+ *  - Vocabulario { en, es }
+ *  - Flashcards con traducción y audio (Web Speech API)
+ *  - Quiz EN→ES y ES→EN
+ *  - Lecturas y escritura guiada
  */
 
 const SYLLABUS = {
@@ -450,17 +450,25 @@ function Flashcards() {
   const current = deck.cards[idx];
 
   return (
-    <SectionCard icon={Brain} title="Flashcards de vocabulario (toca para ver la traducción)" actions={
-      supportsSpeech() ? (
-        <button className="button-secondary" onClick={() => speak(current.en, "en-US")}>
-          <Volume2 className="icon-sm" /> Escuchar
-        </button>
-      ) : null
-    }>
+    <SectionCard
+      icon={Brain}
+      title="Flashcards de vocabulario (toca para ver la traducción)"
+      actions={
+        supportsSpeech() ? (
+          <button className="button-secondary" onClick={() => speak(current.en, "en-US")}>
+            <Volume2 className="icon-sm" /> Escuchar
+          </button>
+        ) : null
+      }
+    >
       <div className="flex-row" style={{ marginBottom: '16px' }}>
         <label style={{ fontSize: '0.875rem' }}>Lista:</label>
         <select className="select" value={deckId} onChange={(e) => setDeckId(e.target.value)}>
-          {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {decks.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
         </select>
         <button onClick={() => setIdx(Math.floor(Math.random() * deck.cards.length))} className="button-secondary">
           Aleatorio
@@ -475,10 +483,12 @@ function Flashcards() {
           className="flashcard-box"
           onClick={() => setFlipped((f) => !f)}
         >
-          <div className="card" style={{ position: 'absolute' }} hidden={flipped}>
+          {/* Frente (inglés) */}
+          <div className="card front">
             {current.en}
           </div>
-          <div className="card back" style={{ position: 'absolute' }} hidden={!flipped}>
+          {/* Reverso (español) */}
+          <div className="card back">
             {current.es}
           </div>
         </motion.div>
@@ -496,7 +506,6 @@ function Flashcards() {
 }
 
 function VocabQuiz({ onFinish }) {
-  // Flatten to a single bilingual list
   const allPairs = useMemo(() => Object.values(SYLLABUS.vocabulary).flat(), []);
   const [dir, setDir] = useState("EN-ES"); // "EN-ES" or "ES-EN"
   const [questions, setQuestions] = useState(() => buildQuestions("EN-ES"));
@@ -608,7 +617,6 @@ function VocabQuiz({ onFinish }) {
               <CheckCircle2 className="icon-sm" /> Puntaje: {score}/{questions.length}
             </div>
             <button onClick={() => resetQuiz()} className="button-secondary">Repetir</button>
-            {/* onFinish is optional */}
           </>
         )}
       </div>
@@ -934,7 +942,7 @@ body {
 .flashcard-container { display: flex; flex-direction: column; align-items: center; }
 .flashcard-box { width: 100%; max-width: 300px; height: 180px; position: relative; perspective: 1000px; }
 .flashcard-box .card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--card-shadow); text-align: center; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); backface-visibility: hidden; }
-.flashcard-box .card.back { background: var(--primary-light); }
+.flashcard-box .card.back { transform: rotateY(180deg); background: var(--primary-light); }
 .quiz-list { list-style: none; padding: 0; margin: 0; }
 .quiz-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
 .option-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
