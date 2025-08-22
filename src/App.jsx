@@ -1,19 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, PenLine, Timer, Brain, Trophy, FileDown, RotateCcw, CheckCircle2 } from "lucide-react";
-
-// Tailwind only styling. shadcn/ui is optional; we keep dependencies minimal for portability.
+import {
+  BookOpen,
+  PenLine,
+  Timer,
+  Brain,
+  Trophy,
+  FileDown,
+  RotateCcw,
+  CheckCircle2,
+  Sun,
+  Moon,
+  Volume2,
+} from "lucide-react";
 
 /**
- * English Study App – 7th Grade (CL curriculum)
- * Features:
- * - Syllabus viewer (OAs + suggested vocabulary)
- * - Practice hub: Flashcards, Vocab Quiz, Reading Comprehension, Writing Prompts
- * - Session planner: Pomodoro-style timer + quick study plans
- * - Progress tracking (localStorage)
- * - Worksheet generator (print-friendly)
- *
- * Data below was extracted/summarized from the provided PDF temario (Séptimo Básico, Inglés).
+ * English Study App – 7th Grade (bilingüe EN–ES)
+ * Cambios:
+ *  - Vocabulario ahora es { en, es }
+ *  - Flashcards muestran traducción (con audio opcional)
+ *  - Quiz con dirección EN→ES o ES→EN
+ *  - Estilos y estructura compatibles con móvil
  */
 
 const SYLLABUS = {
@@ -68,123 +75,135 @@ const SYLLABUS = {
   ],
   vocabulary: {
     emotions: [
-      "happy",
-      "angry",
-      "sad",
-      "tired",
-      "excited",
-      "nervous",
-      "nice",
-      "annoyed",
-      "bored",
-      "upset",
-      "glad",
-      "kind",
-      "friendly",
+      { en: "happy", es: "feliz" },
+      { en: "angry", es: "enojado/a" },
+      { en: "sad", es: "triste" },
+      { en: "tired", es: "cansado/a" },
+      { en: "excited", es: "emocionado/a" },
+      { en: "nervous", es: "nervioso/a" },
+      { en: "nice", es: "amable" },
+      { en: "annoyed", es: "molesto/a" },
+      { en: "bored", es: "aburrido/a" },
+      { en: "upset", es: "disgustado/a" },
+      { en: "glad", es: "contento/a" },
+      { en: "kind", es: "bondadoso/a" },
+      { en: "friendly", es: "amistoso/a" },
     ],
     activities: [
-      "play sports",
-      "go out",
-      "surf the net",
-      "play console games",
-      "chat on the phone",
-      "hang out",
-      "play football",
-      "do karate",
-      "do athletics",
-      "go swimming",
-      "go skating",
+      { en: "play sports", es: "hacer deporte" },
+      { en: "go out", es: "salir" },
+      { en: "surf the net", es: "navegar por internet" },
+      { en: "play console games", es: "jugar en consola" },
+      { en: "chat on the phone", es: "hablar por teléfono" },
+      { en: "hang out", es: "pasar el rato" },
+      { en: "play football", es: "jugar fútbol" },
+      { en: "do karate", es: "hacer kárate" },
+      { en: "do athletics", es: "hacer atletismo" },
+      { en: "go swimming", es: "ir a nadar" },
+      { en: "go skating", es: "ir a patinar" },
     ],
     expressions: [
-      "afraid of",
-      "make friends",
-      "make plans",
-      "make a mistake",
-      "give advice",
-      "I'm fed up with",
-      "I'm sorry to hear that",
-      "see you later",
-      "see you soon",
-      "I feel … because …",
+      { en: "afraid of", es: "tener miedo de" },
+      { en: "make friends", es: "hacer amigos" },
+      { en: "make plans", es: "hacer planes" },
+      { en: "make a mistake", es: "cometer un error" },
+      { en: "give advice", es: "dar consejos" },
+      { en: "I'm fed up with", es: "estoy harto de" },
+      { en: "I'm sorry to hear that", es: "siento escuchar eso" },
+      { en: "see you later", es: "hasta luego" },
+      { en: "see you soon", es: "nos vemos pronto" },
+      { en: "I feel … because …", es: "me siento … porque …" },
     ],
     food: [
-      "apple",
-      "orange",
-      "banana",
-      "lemon",
-      "grape",
-      "tomato",
-      "potato",
-      "lettuce",
-      "cabbage",
-      "carrot",
-      "meat",
-      "chicken",
-      "egg",
-      "pasta",
-      "pizza",
-      "rice",
-      "salad",
-      "sandwich",
-      "biscuit",
-      "bread",
-      "cake",
-      "butter",
-      "cheese",
-      "chocolate",
-      "ice cream",
-      "coffee",
-      "juice",
-      "milk",
-      "water",
-      "tea",
+      { en: "apple", es: "manzana" },
+      { en: "orange", es: "naranja" },
+      { en: "banana", es: "plátano" },
+      { en: "lemon", es: "limón" },
+      { en: "grape", es: "uva" },
+      { en: "tomato", es: "tomate" },
+      { en: "potato", es: "papa" },
+      { en: "lettuce", es: "lechuga" },
+      { en: "cabbage", es: "repollo" },
+      { en: "carrot", es: "zanahoria" },
+      { en: "meat", es: "carne" },
+      { en: "chicken", es: "pollo" },
+      { en: "egg", es: "huevo" },
+      { en: "pasta", es: "pasta" },
+      { en: "pizza", es: "pizza" },
+      { en: "rice", es: "arroz" },
+      { en: "salad", es: "ensalada" },
+      { en: "sandwich", es: "sándwich" },
+      { en: "biscuit", es: "galleta" },
+      { en: "bread", es: "pan" },
+      { en: "cake", es: "torta" },
+      { en: "butter", es: "mantequilla" },
+      { en: "cheese", es: "queso" },
+      { en: "chocolate", es: "chocolate" },
+      { en: "ice cream", es: "helado" },
+      { en: "coffee", es: "café" },
+      { en: "juice", es: "jugo" },
+      { en: "milk", es: "leche" },
+      { en: "water", es: "agua" },
+      { en: "tea", es: "té" },
     ],
     sports: [
-      "football",
-      "tennis",
-      "basketball",
-      "volleyball",
-      "running",
-      "climbing",
-      "skating",
-      "aerobics",
-      "karate",
-      "athletics",
-      "gymnastics",
-      "skateboarding",
+      { en: "football", es: "fútbol" },
+      { en: "tennis", es: "tenis" },
+      { en: "basketball", es: "básquetbol" },
+      { en: "volleyball", es: "vóleibol" },
+      { en: "running", es: "correr" },
+      { en: "climbing", es: "escalada" },
+      { en: "skating", es: "patinaje" },
+      { en: "aerobics", es: "aeróbica" },
+      { en: "karate", es: "kárate" },
+      { en: "athletics", es: "atletismo" },
+      { en: "gymnastics", es: "gimnasia" },
+      { en: "skateboarding", es: "andar en skate" },
     ],
-    equipment: ["sneakers", "ball", "bat", "stick", "helmet"],
-    places: ["court", "pitch", "stadium", "track", "pool"],
+    equipment: [
+      { en: "sneakers", es: "zapatillas" },
+      { en: "ball", es: "pelota" },
+      { en: "bat", es: "bate" },
+      { en: "stick", es: "palo" },
+      { en: "helmet", es: "casco" },
+    ],
+    places: [
+      { en: "court", es: "cancha" },
+      { en: "pitch", es: "campo" },
+      { en: "stadium", es: "estadio" },
+      { en: "track", es: "pista" },
+      { en: "pool", es: "piscina" },
+    ],
     environment: [
-      "environment",
-      "plastic",
-      "glass",
-      "metal",
-      "second hand",
-      "factory",
-      "outdoors",
-      "countryside",
-      "wildfire",
-      "earthquake",
-      "forest",
-      "lake",
-      "sea",
-      "pollution",
-      "temperature",
-      "smog",
-      "waste",
-      "cut down",
-      "destroy",
-      "contaminate",
-      "natural resources",
-      "protect",
-      "save",
-      "pollute",
-      "global problems",
-      "garbage",
-      "plant trees",
-      "trash",
-      "litter",
+      { en: "environment", es: "medio ambiente" },
+      { en: "plastic", es: "plástico" },
+      { en: "glass", es: "vidrio" },
+      { en: "metal", es: "metal" },
+      { en: "second hand", es: "de segunda mano" },
+      { en: "factory", es: "fábrica" },
+      { en: "outdoors", es: "al aire libre" },
+      { en: "countryside", es: "campo" },
+      { en: "wildfire", es: "incendio forestal" },
+      { en: "earthquake", es: "terremoto" },
+      { en: "forest", es: "bosque" },
+      { en: "lake", es: "lago" },
+      { en: "sea", es: "mar" },
+      { en: "pollution", es: "contaminación" },
+      { en: "temperature", es: "temperatura" },
+      { en: "smog", es: "smog" },
+      { en: "waste", es: "residuos" },
+      { en: "cut down", es: "talar" },
+      { en: "destroy", es: "destruir" },
+      { en: "contaminate", es: "contaminar" },
+      { en: "natural resources", es: "recursos naturales" },
+      { en: "protect", es: "proteger" },
+      { en: "save", es: "ahorrar/salvar" },
+      { en: "pollute", es: "contaminar" },
+      { en: "global problems", es: "problemas globales" },
+      { en: "garbage", es: "basura" },
+      { en: "plant trees", es: "plantar árboles" },
+      { en: "trash", es: "basura" },
+      { en: "litter", es: "arrojar basura" },
     ],
   },
 };
@@ -281,7 +300,6 @@ const pickN = (arr, n) => {
   }
   return out;
 };
-
 const shuffle = (arr) => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -306,46 +324,49 @@ const useProgress = () => {
   return [progress, setProgress];
 };
 
-// --- Components ---
+// --- Small helpers ---
+const supportsSpeech = () =>
+  typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+
+const speak = (text, lang = "en-US") => {
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore */
+  }
+};
+
+// --- UI Primitives ---
 function Pill({ children }) {
-  return (
-    <span className="px-2 py-1 rounded-full bg-sky-100 text-sky-700 text-xs mr-2 mb-2 inline-block">
-      {children}
-    </span>
-  );
+  return <span className="pill">{children}</span>;
 }
 
 function SectionCard({ icon: Icon, title, children, actions }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow p-4 sm:p-5 border border-gray-100"
-    >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-lg font-semibold flex items-center gap-2 flex-wrap">
-          {Icon && <Icon className="w-5 h-5" />} {title}
-        </h3>
-        <div className="flex gap-2 w-full sm:w-auto">{actions}</div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="section-card">
+      <div className="section-card-header">
+        <h3 className="section-card-title">{Icon && <Icon className="icon-sm" />} {title}</h3>
+        <div className="section-card-actions">{actions}</div>
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="section-content">{children}</div>
     </motion.div>
   );
 }
 
-function Header() {
+function Header({ darkMode, toggleDarkMode }) {
   return (
-    <header className="mx-auto max-w-6xl px-3 sm:px-4 pt-6 pb-3">
-      <div className="flex items-center justify-between">
+    <header className="header">
+      <div className="header-top">
         <div>
-          <h1 className="text-2xl font-bold">English Study – 7° Básico</h1>
-          <p className="text-gray-600 text-sm">
-            Basado en el temario oficial. Practica vocabulario, lectura y escritura. Guarda tu avance.
-          </p>
+          <h1 className="header-title">English Study – 7° Básico</h1>
+          <p className="header-subtitle">Bilingüe EN–ES. Practica vocabulario, lectura y escritura. Guarda tu avance.</p>
+          <p className="protip">Tip: puedes “Imprimir” para obtener fichas o guías.</p>
         </div>
-        <div className="text-right text-xs text-gray-500 hidden sm:block">
-          <p>Pro tip: usa “Imprimir” del navegador para fichas/guías.</p>
-        </div>
+        <button className="theme-toggle" onClick={toggleDarkMode} aria-label="Cambiar tema">
+          {darkMode ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
+        </button>
       </div>
     </header>
   );
@@ -353,47 +374,45 @@ function Header() {
 
 function Tabs({ value, onChange, items }) {
   return (
-    <div className="mx-auto max-w-6xl px-3 sm:px-4">
-      <div className="flex gap-2 bg-white rounded-xl p-1 shadow border border-gray-100 overflow-x-auto whitespace-nowrap scrollbar-none">
-        {items.map((it) => (
-          <button
-            key={it.value}
-            onClick={() => onChange(it.value)}
-            className={`px-4 py-2 rounded-lg transition text-sm font-medium flex-shrink-0 ${
-              value === it.value ? "bg-sky-600 text-white" : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <span className="inline-flex items-center gap-2">
-              {it.icon && <it.icon className="w-4 h-4" />} {it.label}
-            </span>
-          </button>
-        ))}
-      </div>
+    <div className="tabs">
+      {items.map((it) => (
+        <button
+          key={it.value}
+          onClick={() => onChange(it.value)}
+          className={`tab-button${value === it.value ? " active" : ""}`}
+        >
+          <span className="inline-flex items-center gap-1">
+            {it.icon && <it.icon className="icon-sm" />} {it.label}
+          </span>
+        </button>
+      ))}
     </div>
   );
 }
 
 function SyllabusView() {
   return (
-    <div className="mx-auto max-w-6xl px-3 sm:px-4 grid md:grid-cols-2 gap-4 mt-4">
+    <div className="section-grid grid-2">
       {SYLLABUS.objectives.map((oa) => (
         <SectionCard key={oa.id} icon={BookOpen} title={`${oa.title}`}>
-          <p className="text-gray-700 mb-3 text-sm sm:text-base">{oa.desc}</p>
-          <div className="flex flex-wrap">
+          <p>{oa.desc}</p>
+          <div className="flex-row">
             {oa.indicators.map((ind, idx) => (
               <Pill key={idx}>{ind}</Pill>
             ))}
           </div>
         </SectionCard>
       ))}
-      <SectionCard icon={Brain} title="Vocabulario sugerido">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <SectionCard icon={Brain} title="Vocabulario sugerido (EN — ES)">
+        <div className="section-grid grid-3">
           {Object.entries(SYLLABUS.vocabulary).map(([cat, words]) => (
-            <div key={cat} className="bg-gray-50 rounded-xl p-3">
-              <h4 className="font-semibold capitalize mb-2">{cat}</h4>
-              <div className="flex flex-wrap">
+            <div key={cat} className="section-card" style={{ padding: '12px' }}>
+              <h4 className="section-card-title" style={{ fontSize: '1rem', marginBottom: '8px', textTransform: 'capitalize' }}>
+                {cat}
+              </h4>
+              <div className="flex-row">
                 {words.map((w) => (
-                  <Pill key={w}>{w}</Pill>
+                  <Pill key={`${w.en}-${w.es}`}>{w.en} — {w.es}</Pill>
                 ))}
               </div>
             </div>
@@ -409,7 +428,7 @@ function Flashcards() {
     return Object.entries(SYLLABUS.vocabulary).map(([cat, words]) => ({
       id: cat,
       name: cat,
-      cards: words.map((w) => ({ front: w, back: w })),
+      cards: words.map((w) => ({ en: w.en, es: w.es })),
     }));
   }, []);
 
@@ -428,55 +447,48 @@ function Flashcards() {
     setIdx((i) => (i + 1) % deck.cards.length);
   };
 
+  const current = deck.cards[idx];
+
   return (
-    <SectionCard icon={Brain} title="Flashcards de vocabulario">
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <label className="text-sm">Lista:</label>
-        <select
-          className="border rounded-lg px-3 py-2 text-sm w-full sm:w-auto"
-          value={deckId}
-          onChange={(e) => setDeckId(e.target.value)}
-        >
-          {decks.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
+    <SectionCard icon={Brain} title="Flashcards de vocabulario (toca para ver la traducción)" actions={
+      supportsSpeech() ? (
+        <button className="button-secondary" onClick={() => speak(current.en, "en-US")}>
+          <Volume2 className="icon-sm" /> Escuchar
+        </button>
+      ) : null
+    }>
+      <div className="flex-row" style={{ marginBottom: '16px' }}>
+        <label style={{ fontSize: '0.875rem' }}>Lista:</label>
+        <select className="select" value={deckId} onChange={(e) => setDeckId(e.target.value)}>
+          {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
-        <button
-          onClick={() => setIdx(Math.floor(Math.random() * deck.cards.length))}
-          className="px-3 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 w-full sm:w-auto"
-        >
+        <button onClick={() => setIdx(Math.floor(Math.random() * deck.cards.length))} className="button-secondary">
           Aleatorio
         </button>
       </div>
-      <div className="flex flex-col items-center">
+
+      <div className="flashcard-container">
         <motion.div
           initial={false}
           animate={{ rotateY: flipped ? 180 : 0 }}
           transition={{ duration: 0.4 }}
-          className="w-full max-w-md h-64 sm:h-48 perspective"
+          className="flashcard-box"
           onClick={() => setFlipped((f) => !f)}
         >
-          <div className={`relative w-full h-full text-center cursor-pointer`}>
-            <div className={`absolute inset-0 backface-hidden flex items-center justify-center rounded-2xl shadow border ${
-              flipped ? "hidden" : ""
-            } bg-white text-2xl font-bold`}
-            >
-              {deck.cards[idx].front}
-            </div>
-            <div className={`absolute inset-0 backface-hidden flex items-center justify-center rounded-2xl shadow border ${
-              flipped ? "" : "hidden"
-            } bg-sky-50 text-2xl font-bold`}
-            >
-              {deck.cards[idx].back}
-            </div>
+          <div className="card" style={{ position: 'absolute' }} hidden={flipped}>
+            {current.en}
+          </div>
+          <div className="card back" style={{ position: 'absolute' }} hidden={!flipped}>
+            {current.es}
           </div>
         </motion.div>
-        <div className="mt-4 flex gap-2 w-full">
-          <button className="px-4 py-2 rounded-lg bg-sky-600 text-white w-full sm:w-auto" onClick={next}>
-            Siguiente
-          </button>
+        <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+          <button className="button-primary" onClick={next}>Siguiente</button>
+          {supportsSpeech() && flipped && (
+            <button className="button-secondary" onClick={() => speak(current.es, "es-ES")}>
+              <Volume2 className="icon-sm" /> Escuchar ES
+            </button>
+          )}
         </div>
       </div>
     </SectionCard>
@@ -484,18 +496,37 @@ function Flashcards() {
 }
 
 function VocabQuiz({ onFinish }) {
-  const allWords = Object.values(SYLLABUS.vocabulary).flat();
-  const [questions, setQuestions] = useState(() => buildQuestions());
+  // Flatten to a single bilingual list
+  const allPairs = useMemo(() => Object.values(SYLLABUS.vocabulary).flat(), []);
+  const [dir, setDir] = useState("EN-ES"); // "EN-ES" or "ES-EN"
+  const [questions, setQuestions] = useState(() => buildQuestions("EN-ES"));
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
-  function buildQuestions() {
-    const qs = pickN(allWords, 8).map((word) => {
-      const wrong = pickN(allWords.filter((w) => w !== word), 3);
-      const opts = shuffle([word, ...wrong]);
-      // Spanish hint via simple template (teacher can change later)
-      const hint = `Selecciona la palabra que corresponde en inglés: “${word}”`;
-      return { word, opts, hint, correct: opts.indexOf(word) };
+  function buildQuestions(direction) {
+    const qs = pickN(allPairs, 8).map((pair) => {
+      const wrong = pickN(allPairs.filter((w) => w.en !== pair.en), 3);
+      if (direction === "EN-ES") {
+        const opts = shuffle([pair.es, ...wrong.map((w) => w.es)]);
+        return {
+          prompt: pair.en,
+          promptLang: "en",
+          opts,
+          correct: opts.indexOf(pair.es),
+          pair,
+          hint: `Elige la traducción en español para: “${pair.en}”`,
+        };
+      } else {
+        const opts = shuffle([pair.en, ...wrong.map((w) => w.en)]);
+        return {
+          prompt: pair.es,
+          promptLang: "es",
+          opts,
+          correct: opts.indexOf(pair.en),
+          pair,
+          hint: `Choose the English word for: “${pair.es}”`,
+        };
+      }
     });
     return qs;
   }
@@ -505,19 +536,44 @@ function VocabQuiz({ onFinish }) {
     return questions.reduce((acc, q, i) => (answers[i] === q.correct ? acc + 1 : acc), 0);
   }, [submitted, answers, questions]);
 
+  const resetQuiz = (newDir = dir) => {
+    setQuestions(buildQuestions(newDir));
+    setAnswers({});
+    setSubmitted(false);
+  };
+
   return (
-    <SectionCard icon={Trophy} title="Quiz de vocabulario (8 preguntas)" actions={[
-      <button key="regen" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm flex items-center gap-2 w-full sm:w-auto" onClick={() => { setQuestions(buildQuestions()); setAnswers({}); setSubmitted(false); }}>
-        <RotateCcw className="w-4 h-4"/> Nuevo
-      </button>
-    ]}>
-      <ol className="space-y-3">
+    <SectionCard
+      icon={Trophy}
+      title="Quiz de vocabulario (8 preguntas)"
+      actions={[
+        <select
+          key="dir"
+          className="select"
+          value={dir}
+          onChange={(e) => {
+            const d = e.target.value;
+            setDir(d);
+            resetQuiz(d);
+          }}
+          title="Dirección del quiz"
+        >
+          <option>EN-ES</option>
+          <option>ES-EN</option>
+        </select>,
+        <button key="regen" className="button-secondary" onClick={() => resetQuiz()}>
+          <RotateCcw className="icon-sm" /> Nuevo
+        </button>,
+      ]}
+    >
+      <ol className="quiz-list">
         {questions.map((q, i) => (
-          <li key={i} className="bg-white border rounded-xl p-3">
-            <p className="text-sm text-gray-700 mb-2">
-              <span className="font-medium">P{i + 1}.</span> {q.hint}
+          <li key={i} className="quiz-card">
+            <p style={{ fontSize: '0.875rem', marginBottom: '8px' }}>
+              <span style={{ fontWeight: '600' }}>P{i + 1}.</span> {q.hint}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+            <div className="option-grid" style={{ marginBottom: '8px' }}>
               {q.opts.map((opt, j) => {
                 const selected = answers[i] === j;
                 const isCorrect = submitted && j === q.correct;
@@ -526,46 +582,33 @@ function VocabQuiz({ onFinish }) {
                   <button
                     key={j}
                     onClick={() => !submitted && setAnswers({ ...answers, [i]: j })}
-                    className={`px-3 py-2 rounded-lg border text-left w-full ${
-                      selected ? "border-sky-600" : "border-gray-200"
-                    } ${submitted && isCorrect ? "bg-green-50" : ""} ${submitted && isWrong ? "bg-red-50" : ""}`}
+                    className={`option-button${selected ? ' selected' : ''}${submitted && isCorrect ? ' correct' : ''}${submitted && isWrong ? ' wrong' : ''}`}
                   >
                     {opt}
                   </button>
                 );
               })}
             </div>
+
+            {submitted && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--fg-secondary)' }}>
+                Correcta: <strong>{dir === "EN-ES" ? q.pair.es : q.pair.en}</strong> ({q.pair.en} — {q.pair.es})
+              </div>
+            )}
           </li>
         ))}
       </ol>
-      <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         {!submitted ? (
-          <button
-            onClick={() => setSubmitted(true)}
-            className="px-4 py-2 rounded-lg bg-sky-600 text-white w-full sm:w-auto"
-          >
-            Enviar
-          </button>
+          <button onClick={() => setSubmitted(true)} className="button-primary">Enviar</button>
         ) : (
           <>
-            <div className="flex items-center gap-2 text-green-700 font-semibold">
-              <CheckCircle2 className="w-5 h-5" /> Puntaje: {score}/{questions.length}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#15803d', fontWeight: '600' }}>
+              <CheckCircle2 className="icon-sm" /> Puntaje: {score}/{questions.length}
             </div>
-            <button
-              onClick={() => {
-                setQuestions(buildQuestions());
-                setAnswers({});
-                setSubmitted(false);
-              }}
-              className="px-3 py-2 rounded-lg bg-gray-100 w-full sm:w-auto"
-            >
-              Repetir
-            </button>
-            {onFinish && (
-              <button onClick={() => onFinish(score, questions.length)} className="px-3 py-2 rounded-lg bg-emerald-600 text-white w-full sm:w-auto">
-                Guardar avance
-              </button>
-            )}
+            <button onClick={() => resetQuiz()} className="button-secondary">Repetir</button>
+            {/* onFinish is optional */}
           </>
         )}
       </div>
@@ -585,29 +628,33 @@ function ReadingComp() {
 
   return (
     <SectionCard icon={BookOpen} title="Comprensión lectora (OA9–OA10)">
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <label className="text-sm">Texto:</label>
-        <select className="border rounded-lg px-3 py-2 text-sm w-full sm:w-auto" value={p.id} onChange={(e) => {
-          const next = READING_PASSAGES.find((x) => x.id === Number(e.target.value));
-          setP(next || READING_PASSAGES[0]);
-          setAnswers({});
-          setSubmitted(false);
-        }}>
+      <div className="flex-row" style={{ marginBottom: '12px' }}>
+        <label style={{ fontSize: '0.875rem' }}>Texto:</label>
+        <select
+          className="select"
+          value={p.id}
+          onChange={(e) => {
+            const next = READING_PASSAGES.find((x) => x.id === Number(e.target.value));
+            setP(next || READING_PASSAGES[0]);
+            setAnswers({});
+            setSubmitted(false);
+          }}
+        >
           {READING_PASSAGES.map((x) => (
             <option key={x.id} value={x.id}>{x.title}</option>
           ))}
         </select>
       </div>
-      <article className="bg-gray-50 rounded-xl p-4 leading-relaxed mb-4 text-sm sm:text-base">
-        {p.text}
-      </article>
-      <ol className="space-y-3">
+
+      <article className="section-card" style={{ marginBottom: '16px' }}>{p.text}</article>
+
+      <ol className="quiz-list">
         {p.questions.map((q, i) => (
-          <li key={i} className="bg-white border rounded-xl p-3">
-            <p className="text-sm text-gray-700 mb-2">
-              <span className="font-medium">P{i + 1}.</span> {q.q}
+          <li key={i} className="quiz-card">
+            <p style={{ fontSize: '0.875rem', marginBottom: '8px' }}>
+              <span style={{ fontWeight: 600 }}>P{i + 1}.</span> {q.q}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="option-grid">
               {q.options.map((opt, j) => {
                 const selected = answers[i] === j;
                 const isCorrect = submitted && j === q.a;
@@ -616,9 +663,7 @@ function ReadingComp() {
                   <button
                     key={j}
                     onClick={() => !submitted && setAnswers({ ...answers, [i]: j })}
-                    className={`px-3 py-2 rounded-lg border text-left w-full ${
-                      selected ? "border-sky-600" : "border-gray-200"
-                    } ${submitted && isCorrect ? "bg-green-50" : ""} ${submitted && isWrong ? "bg-red-50" : ""}`}
+                    className={`option-button${selected ? ' selected' : ''}${submitted && isCorrect ? ' correct' : ''}${submitted && isWrong ? ' wrong' : ''}`}
                   >
                     {opt}
                   </button>
@@ -628,14 +673,13 @@ function ReadingComp() {
           </li>
         ))}
       </ol>
-      <div className="mt-4 flex items-center gap-3">
+
+      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         {!submitted ? (
-          <button className="px-4 py-2 rounded-lg bg-sky-600 text-white w-full sm:w-auto" onClick={() => setSubmitted(true)}>
-            Enviar
-          </button>
+          <button className="button-primary" onClick={() => setSubmitted(true)}>Enviar</button>
         ) : (
-          <div className="flex items-center gap-2 text-green-700 font-semibold">
-            <CheckCircle2 className="w-5 h-5" /> Puntaje: {score}/{p.questions.length}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#15803d', fontWeight: '600' }}>
+            <CheckCircle2 className="icon-sm" /> Puntaje: {score}/{p.questions.length}
           </div>
         )}
       </div>
@@ -647,38 +691,33 @@ function WritingPrompts() {
   const PROMPTS = [
     { id: 1, text: "Write about a personal experience where you helped the environment. Use first/next/finally and at least 80 words.", oa: "OA13, OA16 (conectores, pasado)" },
     { id: 2, text: "Describe your favorite sport or hobby. Include equipment, place, and how often you practice.", oa: "OA16 (rutinas, deportes, frecuencia)" },
-    { id: 3, text: "Give advice to a friend who feels nervous before a test. Use expressions (give advice, I\\'m sorry to hear that, see you soon).", oa: "OA16 (expresiones comunes)" },
+    { id: 3, text: "Give advice to a friend who feels nervous before a test. Use expressions (give advice, I'm sorry to hear that, see you soon).", oa: "OA16 (expresiones comunes)" },
     { id: 4, text: "Explain a simple cause-and-effect situation (e.g., If you heat ice cream, it melts). Give two more examples.", oa: "OA16 (if, causa-efecto)" },
   ];
-
   const [sel, setSel] = useState(PROMPTS[0]);
   const [text, setText] = useState("");
-
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
-    <SectionCard icon={PenLine} title="Escritura guiada (OA13–OA16)" actions={[
-      <button key="print" onClick={() => window.print()} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm flex items-center gap-2 w-full sm:w-auto">
-        <FileDown className="w-4 h-4"/> Imprimir hoja
-      </button>
-    ]}>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="text-sm">Indicación:</label>
-        <select className="border rounded-lg px-3 py-2 text-sm w-full sm:w-auto" value={sel.id} onChange={(e) => setSel(PROMPTS.find(p => p.id === Number(e.target.value)) || PROMPTS[0])}>
-          {PROMPTS.map((p) => (
-            <option key={p.id} value={p.id}>{p.text.slice(0, 50)}…</option>
-          ))}
+    <SectionCard
+      icon={PenLine}
+      title="Escritura guiada (OA13–OA16)"
+      actions={[
+        <button key="print" onClick={() => window.print()} className="button-secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <FileDown className="icon-sm" /> Imprimir hoja
+        </button>,
+      ]}
+    >
+      <div className="flex-row" style={{ marginBottom: '12px' }}>
+        <label style={{ fontSize: '0.875rem' }}>Indicación:</label>
+        <select className="select" value={sel.id} onChange={(e) => setSel(PROMPTS.find((p) => p.id === Number(e.target.value)) || PROMPTS[0])}>
+          {PROMPTS.map((p) => <option key={p.id} value={p.id}>{p.text.slice(0, 50)}…</option>)}
         </select>
-        <span className="text-xs text-gray-600">Alineación: {sel.oa}</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--fg-secondary)' }}>Alineación: {sel.oa}</span>
       </div>
-      <div className="bg-gray-50 rounded-xl p-3 text-sm mb-2">{sel.text}</div>
-      <textarea
-        className="w-full min-h-[180px] border rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-sky-300 text-sm sm:text-base"
-        placeholder="Escribe tu texto aquí…"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <div className="mt-2 text-sm text-gray-600">Palabras: {wordCount}</div>
+      <div className="section-card" style={{ marginBottom: '12px', fontSize: '0.875rem' }}>{sel.text}</div>
+      <textarea className="textarea" placeholder="Escribe tu texto aquí…" value={text} onChange={(e) => setText(e.target.value)} />
+      <div style={{ marginTop: '8px', fontSize: '0.875rem', color: 'var(--fg-secondary)' }}>Palabras: {wordCount}</div>
     </SectionCard>
   );
 }
@@ -724,27 +763,23 @@ function SessionPlanner({ onComplete }) {
 
   return (
     <SectionCard icon={Timer} title="Sesión de estudio (Pomodoro)">
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex-row" style={{ marginBottom: '12px' }}>
         {presets.map((p) => (
-          <button key={p.label} className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm w-full sm:w-auto" onClick={() => { setMinutes(p.m); setSeconds(0); }}>
+          <button key={p.label} className="button-secondary" onClick={() => { setMinutes(p.m); setSeconds(0); }}>
             {p.label}
           </button>
         ))}
       </div>
-      <div className="text-5xl font-bold tracking-widest text-center my-4">
-        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+      <div className="timer-display">
+        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </div>
-      <div className="flex justify-center gap-2 flex-wrap">
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
         {!running ? (
-          <button className="px-4 py-2 rounded-lg bg-sky-600 text-white w-full sm:w-auto" onClick={() => setRunning(true)}>
-            Iniciar
-          </button>
+          <button className="button-primary" onClick={() => setRunning(true)}>Iniciar</button>
         ) : (
-          <button className="px-4 py-2 rounded-lg bg-rose-600 text-white w-full sm:w-auto" onClick={() => setRunning(false)}>
-            Pausar
-          </button>
+          <button className="button-primary" style={{ backgroundColor: '#dc2626' }} onClick={() => setRunning(false)}>Pausar</button>
         )}
-        <button className="px-4 py-2 rounded-lg bg-gray-100 w-full sm:w-auto" onClick={reset}>Reiniciar</button>
+        <button className="button-secondary" onClick={reset}>Reiniciar</button>
       </div>
     </SectionCard>
   );
@@ -756,18 +791,18 @@ function ProgressView({ progress }) {
   const lastScore = progress.lastVocabScore || 0;
   return (
     <SectionCard icon={Trophy} title="Progreso">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <div className="text-3xl font-bold">{sessions}</div>
-          <div className="text-sm text-gray-600">Sesiones completadas</div>
+      <div className="progress-grid">
+        <div className="progress-card">
+          <div className="value">{sessions}</div>
+          <div className="label">Sesiones completadas</div>
         </div>
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <div className="text-3xl font-bold">{bestVocab}</div>
-          <div className="text-sm text-gray-600">Mejor puntaje vocab</div>
+        <div className="progress-card">
+          <div className="value">{bestVocab}</div>
+          <div className="label">Mejor puntaje vocab</div>
         </div>
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <div className="text-3xl font-bold">{lastScore}</div>
-          <div className="text-sm text-gray-600">Último puntaje vocab</div>
+        <div className="progress-card">
+          <div className="value">{lastScore}</div>
+          <div className="label">Último puntaje vocab</div>
         </div>
       </div>
     </SectionCard>
@@ -776,7 +811,7 @@ function ProgressView({ progress }) {
 
 function PracticeHub({ onSaveProgress }) {
   return (
-    <div className="mx-auto max-w-6xl px-3 sm:px-4 grid md:grid-cols-2 gap-4 mt-4">
+    <div className="section-grid grid-2">
       <Flashcards />
       <VocabQuiz onFinish={(score, total) => onSaveProgress({ lastVocabScore: `${score}/${total}`, bestVocab: score })} />
       <ReadingComp />
@@ -786,54 +821,138 @@ function PracticeHub({ onSaveProgress }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState("syllabus");
+  const [tab, setTab] = useState('syllabus');
   const [progress, setProgress] = useProgress();
+  const [darkMode, setDarkMode] = useState(() => {
+    try { return localStorage.getItem('theme') === 'dark'; } catch { return false; }
+  });
+
+  useEffect(() => {
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    try { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); } catch {}
+  }, [darkMode]);
 
   const saveProgress = (patch) => {
     setProgress((p) => {
       const next = { ...p };
       if (patch.lastVocabScore) next.lastVocabScore = patch.lastVocabScore;
-      if (typeof patch.bestVocab === "number") next.bestVocab = Math.max(p.bestVocab || 0, patch.bestVocab);
+      if (typeof patch.bestVocab === 'number') next.bestVocab = Math.max(p.bestVocab || 0, patch.bestVocab);
       return next;
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
-      <Header />
+    <div className="app-container">
+      <Header darkMode={darkMode} toggleDarkMode={() => setDarkMode((d) => !d)} />
       <Tabs
         value={tab}
         onChange={setTab}
         items={[
-          { value: "syllabus", label: "Temario", icon: BookOpen },
-          { value: "practice", label: "Práctica", icon: PenLine },
-          { value: "sessions", label: "Sesiones", icon: Timer },
-          { value: "progress", label: "Progreso", icon: Trophy },
+          { value: 'syllabus', label: 'Temario', icon: BookOpen },
+          { value: 'practice', label: 'Práctica', icon: PenLine },
+          { value: 'sessions', label: 'Sesiones', icon: Timer },
+          { value: 'progress', label: 'Progreso', icon: Trophy },
         ]}
       />
 
-      {tab === "syllabus" && <SyllabusView />}
-      {tab === "practice" && <PracticeHub onSaveProgress={saveProgress} />}
-      {tab === "sessions" && (
-        <div className="mx-auto max-w-6xl px-3 sm:px-4 mt-4">
+      {tab === 'syllabus' && <SyllabusView />}
+      {tab === 'practice' && <PracticeHub onSaveProgress={saveProgress} />}
+      {tab === 'sessions' && (
+        <div className="section-grid">
           <SessionPlanner onComplete={() => setProgress((p) => ({ ...p, sessions: (p.sessions || 0) + 1 }))} />
         </div>
       )}
-      {tab === "progress" && (
-        <div className="mx-auto max-w-6xl px-3 sm:px-4 mt-4">
+      {tab === 'progress' && (
+        <div className="section-grid">
           <ProgressView progress={progress} />
         </div>
       )}
 
-      <footer className="mx-auto max-w-6xl px-3 sm:px-4 py-10 text-center text-xs text-gray-500">
+      <footer className="footer">
         Hecho para estudiar desde el temario de 7° básico. Guarda en el navegador; no requiere internet.
       </footer>
 
       <style>{`
-        .perspective { perspective: 1000px; }
-        .backface-hidden { backface-visibility: hidden; }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+:root {
+  --bg: #f8fafc;
+  --bg-secondary: #ffffff;
+  --fg: #1f2937;
+  --fg-secondary: #4b5563;
+  --primary: #0369a1;
+  --primary-light: #e0f2fe;
+  --border: #e5e7eb;
+  --card-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.dark {
+  --bg: #0f172a;
+  --bg-secondary: #1e293b;
+  --fg: #f1f5f9;
+  --fg-secondary: #94a3b8;
+  --primary: #38bdf8;
+  --primary-light: #0ea5e9;
+  --border: #334155;
+  --card-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+body {
+  display: block;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+.app-container { background: var(--bg); color: var(--fg); min-height: 100vh; display: flex; flex-direction: column; }
+.header { max-width: 1200px; margin: 0 auto; padding: 24px 16px 12px 16px; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+.header-title { font-size: 1.5rem; font-weight: bold; margin: 0; }
+.header-subtitle { font-size: 0.875rem; color: var(--fg-secondary); margin-top: 4px; }
+.protip { font-size: 0.75rem; color: var(--fg-secondary); margin-top: 8px; }
+.theme-toggle { background: var(--primary); color: white; border: none; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.theme-toggle:hover { background: var(--primary-light); color: var(--primary); }
+.tabs { max-width: 1200px; margin: 0 auto; padding: 0 16px; margin-top: 8px; display: flex; gap: 4px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; }
+.tab-button { flex: 1; padding: 8px; font-size: 0.875rem; border: none; background: transparent; color: var(--fg); cursor: pointer; border-radius: 8px; }
+.tab-button.active { background: var(--primary); color: white; }
+.section-grid { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: 1fr; }
+.grid-3 { grid-template-columns: 1fr; }
+@media (min-width: 768px) {
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+.section-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--card-shadow); }
+.section-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.section-card-title { font-size: 1.125rem; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0; }
+.section-card-actions { display: flex; gap: 8px; }
+.pill { display: inline-block; padding: 2px 6px; margin: 2px; font-size: 0.75rem; border-radius: 9999px; background: var(--primary-light); color: var(--primary); }
+.button-primary { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.button-primary:hover { background: var(--primary-light); color: var(--primary); }
+.button-secondary { background: var(--bg-secondary); color: var(--fg); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.button-secondary:hover { background: var(--border); }
+.flex-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--fg); }
+.flashcard-container { display: flex; flex-direction: column; align-items: center; }
+.flashcard-box { width: 100%; max-width: 300px; height: 180px; position: relative; perspective: 1000px; }
+.flashcard-box .card { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--card-shadow); text-align: center; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); backface-visibility: hidden; }
+.flashcard-box .card.back { background: var(--primary-light); }
+.quiz-list { list-style: none; padding: 0; margin: 0; }
+.quiz-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.option-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.option-button { padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); text-align: left; cursor: pointer; }
+.option-button.selected { border-color: var(--primary); }
+.option-button.correct { background: #dcfce7; }
+.option-button.wrong { background: #fee2e2; }
+.textarea { width: 100%; min-height: 180px; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 0.875rem; background: var(--bg-secondary); color: var(--fg); }
+.timer-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 0.1em; text-align: center; margin: 16px 0; }
+.progress-grid { display: grid; gap: 8px; }
+@media (min-width: 640px) { .progress-grid { grid-template-columns: repeat(3, 1fr); } }
+.progress-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+.progress-card .value { font-size: 1.5rem; font-weight: bold; }
+.progress-card .label { font-size: 0.875rem; color: var(--fg-secondary); }
+.footer { max-width: 1200px; margin: 0 auto; padding: 40px 16px; font-size: 0.75rem; color: var(--fg-secondary); text-align: center; }
+.icon-sm { width: 20px; height: 20px; }
+.perspective { perspective: 1000px; }
+.backface-hidden { backface-visibility: hidden; }
       `}</style>
     </div>
   );
